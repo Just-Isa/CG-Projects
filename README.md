@@ -2,7 +2,7 @@
 
 - deBoor.py
 - pointViewerTemplate.py
-- RayTracer.py
+- RayTracer.py (with multiprocessing capabilities)  
 
 --- 
 
