@@ -16,11 +16,3 @@ Switch Perspective:
         Perspective     :   P
 
 Shadows                 :   - Press j to activate/deactivate
-
-Shadow mapping note:
-        
-        Durch einen fehler der bei sogut wie jedem auftritt, konnte ich den ansatz des Shadow Mappings nicht weiter verfolgen. Stattdessen habe ich nun andere Schatten eingebaut.
-
-Side Note:
-        
-        Meine Raute taste ist kaputt, weswegen meine kommentare alle mit """ verfasst sind, hoffe das ist kein problem :)
