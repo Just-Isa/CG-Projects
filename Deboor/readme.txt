@@ -1,5 +1,3 @@
-Ich habe nun wieder eine funktionierende Tastatur! Also kann ich wieder normal Auskommentieren :)
-
 Punkte-Gewichtung ändern:   - Shift gedrückt halten und auf einen Punkt drücken, und währrend man gedrückt hält über / unter den Punkt ziehen.
 
 Anzahl der Punkte ändern:   - m für weniger Punkte
