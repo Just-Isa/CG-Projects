@@ -1,4 +1,4 @@
-# Runnin instructions in respective python files
+# Running instructions in respective python files
 
 - deBoor.py
 - pointViewerTemplate.py
