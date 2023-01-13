@@ -50,7 +50,6 @@ class Scene:
         self.controlpoints = []
         self.gewichtung = []
         self.splines = []
-        # hier einfach mal 4 wählen, sollte laut konsti passen
         self.k = 4
         self.anzahlFaktor = 10
 
@@ -70,25 +69,20 @@ class Scene:
 
         # set foreground color to black
         glColor(0.0, 0.0, 0.0)
-        #glBegin(GL_LINE)
 
-        # Control polygon, hoffentlich ist das wie oben -> PASST
         glBegin(GL_LINE_STRIP)
         for i in range(len(self.controlpoints)):
             glVertex2f(self.controlpoints[i][0], self.controlpoints[i][1])
         glEnd()  
 
-        # Punkte können wir noch anzeigen lassen
         glBegin(GL_POINTS)
         for p in self.controlpoints:
             glVertex2f(p[0], p[1])
         glEnd()   
 
-        # Spline polygon noch rendern
         glColor(0,0.4,0.6)
         glBegin(GL_LINE_STRIP)
         for i in range(len(self.splines)):
-            # Perspektivische division
             self.splines[i][0] /= self.splines[i][2]
             self.splines[i][1] /= self.splines[i][2]
             glVertex2f(self.splines[i][0], self.splines[i][1])
@@ -101,11 +95,9 @@ class Scene:
             glVertex2f(self.splines[i][0], self.splines[i][1])
         glEnd()  
 
-        #muss neu berechnet werden, sodass wir die WErte angepasst einbringen können
         self.calcSpline()            
 
                 
-    # punkt hinzu
     def add_point(self, p):
         self.calcSpline(p)
 
@@ -117,7 +109,6 @@ class Scene:
         self.splines = []
 
 
-    # bezier nicht mehr nötig, trotzdem danke konsti
     '''def determine_points_on_bezier_curve(self):
         self.points_on_bezier_curve = []
         t = 0
@@ -133,48 +124,31 @@ class Scene:
             self.controlpoints.append(p)
             self.gewichtung.append(1)
             print(len(self.gewichtung))
-        # erst knoten berechnen 
         self.knotenBerechnen()
         self.splines = []
         t = 0
         #laut tut
         while t < self.knots[-1]:
-            # R fuer deboor finden, folie 293
             r = self.findRForDeboor(t)
-            # Deboor ausführen
             b = self.deBoor(self.controlpoints, self.knots, t, self.k - 1, r)
             self.splines.append(b)
-            # So sollten wir die anzahl beeinflussen koennen
             t += 1 / float(self.anzahlFaktor)
 
     def findRForDeboor(self, t):
-        #Folie 293, t teil aus [tr, tr+1] finden und zum deboor mitgeben
         for i in range(len(self.knots) - 1):
             if self.knots[i] > t:
                 return i - 1
 
     def knotenBerechnen(self):
-        #Knotenvektor berechnen
-        #anzahl füllen
         self.knots = [0] * self.k
-        #knotenpunkte -> Siehe arbeitsblatt
         for n in range(1, len(self.controlpoints) -1 - (self.k - 2)):
             self.knots.append(n)
-        #Siehe arbeitsblatt
         for n in range(self.k):
             self.knots.append(len(self.controlpoints) - (self.k - 1))
 
-    #Rekursion wie bei casteljau
     def deBoor(self, controlPoints, knot, t, recursion, i):
-        # alpha = (x - t[j + k - p]) / (t[j + 1 + k - r] - t[j + k - p]) d[j] = 
-        # (1.0 - alpha) * d[j - 1] + alpha * d[j]
-        # deboor geht jetzt, aber gewichtung will einfach nicht - 09:40, 
-        # Nach dem tut: ES GEHT
         if recursion == 0:
-            # print(controlPoints[i])
-            # print(controlPoints[i]) * self.gewichtung[i]
             return controlPoints[i] * self.gewichtung[i]
-        #der Algorithmus selber
         alpha = (t - knot[i]) / (knot[i - recursion + self.k] - knot[i])
         b = ((1 - alpha) * self.deBoor(controlPoints, knot, t, recursion - 1, i - 1) 
             + alpha * self.deBoor(controlPoints, knot, t, recursion - 1, i))
@@ -184,37 +158,23 @@ class RenderWindow:
     """GLFW Rendering window class"""
     def __init__(self, scene):
         
-        # save current working directory
         cwd = os.getcwd()
         
-        # Initialize the library
         if not glfw.init():
             return
         
-        # restore cwd
         os.chdir(cwd)
         
-        # version hints
-        #glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
-        #glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
-        #glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL_TRUE)
-        #glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-        
-        # buffer hints
         glfw.window_hint(glfw.DEPTH_BITS, 32)
 
-        # define desired frame rate
         self.frame_rate = 100
-        # make a window
         self.width, self.height = scene.width, scene.height
         self.aspect = self.width/float(self.height)
         self.window = glfw.create_window(self.width, self.height, scene.scenetitle, None, None)
         if not self.window:
             glfw.terminate()
             return
-        # Make the window's context current
         glfw.make_context_current(self.window)
-        # initialize GL
 
         glViewport(0, 0, self.width, self.height)
         glMatrixMode(GL_PROJECTION)
@@ -226,14 +186,12 @@ class RenderWindow:
 
         glMatrixMode(GL_MODELVIEW)
 
-        # set window callbacks
         glfw.set_mouse_button_callback(self.window, self.onMouseButton)
         glfw.set_key_callback(self.window, self.onKeyboard)
         glfw.set_window_size_callback(self.window, self.onSize)
         glfw.set_cursor_pos_callback(self.window, self.mousemoved)
         
-        # create scene
-        self.scene = scene #Scene(self.width, self.height)
+        self.scene = scene 
         self.scene.setOpenGLStates()
         
         # exit flag
@@ -256,26 +214,21 @@ class RenderWindow:
                     x, y = glfw.get_cursor_pos(win)
                     startPoint = y
                     for point in self.scene.points:
-                        #Bereich von +-50 pixeln in dem man clicken kann für nen punkt
+                        #Set clickable area to +- 30 px
                         if point[0] - 30 < x < point[0] + 30 and point[1] - 30 < y < point[1] + 30:
                             for i in range(len(self.scene.controlpoints)):
-                                # Zum punkte in nem bereich finden
+                                # Find points in an area
                                 if (((x - self.scene.width/2) / (self.scene.width/2) - 0.05 < self.scene.controlpoints[i][0] < (x - self.scene.width/2) / (self.scene.width/2) + 0.05) and
                                     (1 - (y / (self.scene.height/2)) - 0.05 < self.scene.controlpoints[i][1] < 1 - (y / (self.scene.height/2)) + 0.05)):
-                                        # Index speichern um zu wissen welchen punkt wir gewichten wollen
                                         angefassterPunktIndex = i
                                         gewichtungHoch = True
-                                        #print(x, y)
-                                        #print(self.scene.gewichtung[angefassterPunktIndex])
                                         break
                 elif action == glfw.RELEASE:
                     gewichtungHoch = False
             else:
                 if action == glfw.PRESS:    
                     p = np.array(glfw.get_cursor_pos(win))
-                    # Punkt noch in allgemeines array appenden
                     self.scene.points.append((p[0], p[1]))
-                    # Auf fenster anpassen vergessen, goodbye 2.5 stunden zeit
                     p[0] = (p[0] - self.scene.width/2) / (self.scene.width/2) 
                     p[1] = 1 - (p[1] / (self.scene.height/2))
                     pointToCheck = np.array([p[0], p[1], 1])
@@ -283,29 +236,23 @@ class RenderWindow:
 
     def onKeyboard(self, win, key, scancode, action, mods):
         if action == glfw.PRESS:
-            #Ordnung
             if key == glfw.KEY_K:
                 if mods == glfw.MOD_SHIFT:
-                    # Das funktioniert jetzt
                     if self.scene.k < len(self.scene.controlpoints):
                         self.scene.k += 1
                 else:
-                    # siehe oben, aber andersrum 
                     if self.scene.k-1 > 2:
                         self.scene.k -= 1
                     else:
                         self.scene.k = 2
-            #anzahl an punkten noch implementieren
             if key == glfw.KEY_M:
                 if mods == glfw.MOD_SHIFT:
                     self.scene.anzahlFaktor += 10
                 else:
-                    #mindestanzahl einfahc mal 5 oder so
                     if self.scene.anzahlFaktor-10 < 10:
                         self.scene.anzahlFaktor = 10
                     else:
                         self.scene.anzahlFaktor -= 10
-            # Szene säubern
             if key == glfw.KEY_C:
                 self.scene.clear()
 
@@ -318,7 +265,6 @@ class RenderWindow:
     
 
     def run(self):
-        # initializer timer
         glfw.set_time(0.0)
         t = 0.0
         while not glfw.window_should_close(self.window) and not self.exitNow:

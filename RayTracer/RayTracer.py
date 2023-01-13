@@ -10,7 +10,6 @@ import Light as licht
 import Material as material
 import datetime
 import multiprocessing
-from multiprocessing import Manager
 import sys
 
 def normal(vector):
@@ -39,36 +38,29 @@ def computeDirectLight(object, ray, light, objectlist):
         ambientPart = object.material.baseColorAt(ray.pointAtParameter(object.intersectionParameter(ray))) * 0.5
     else:
         ambientPart = object.material.ambient * 0.5
-    # Schnittpunktle
+        
     schnittpunkt = ray.pointAtParameter(object.intersectionParameter(ray))
     lightRay = object.normalAt(light.origin - schnittpunkt)
     n = object.normalAt(schnittpunkt)
 
-    # Berechnung nach Formel aus Skript
     diffusePart = light.color * 0.4 * lightRay.dot(n)
     invertedL = np.array([lightRay[0],-lightRay[2], lightRay[1]])  
     spekPart = light.color * 0.4 * invertedL.dot(-ray.direction) ** light.harte
     
-    #Berechnung des Normalenvektors vom Vektor des Lichtes Zum Schnittpunkt, auch schatten genannt  
+    #Calculation of Norm-Vec from Vec of the Light to Intersection (shadow)
     normalVektorOriginSchnittpunkt = normal(light.origin - schnittpunkt)
     for object in objectlist:
-        #Hier muss geschaut werden ob noch eine intersection existiert, wenn ja kann die farbe auf Schwarz gesetzt werden und somit ein schatten erzeugt werden
-        #Prüfen zwischen object und neuem Ray, welches vom Schnittpunkt ausgeht, und mit dem normalvektor zwischen dem Schnittpunkt und der Herkunft der Lichtquelle verläuft (??? WIE ÜBERPRÜFT MAN DAS)
-        #Wenn eine intersection existiert, kann man einfach schwarz returnen, da dies somit das zweite objekt von der lichtquelle aus wäre welches getroffen wird.
-        #0.3 extra überprüfung weil die diskriminante auch andere werte returnen kann die wir nicht wollen
         if object.intersectionParameter(strahl.Ray(schnittpunkt, normalVektorOriginSchnittpunkt)) and object.intersectionParameter(strahl.Ray(schnittpunkt, normalVektorOriginSchnittpunkt)) > 0.3:
             return (diffusePart + ambientPart + spekPart) * 0.4
     
-    # Zusammenrechnen für den Farbwert
     return diffusePart + ambientPart + spekPart
 
     # reflect viewing angle
 def computeReflectedRay(object, ray):
-    schnittpunkt = ray.pointAtParameter(object.intersectionParameter(ray))    #schnitt 
-    d = ray.direction   #Eintreffender vektor d
-    #Normale n vom schnittvek
+    schnittpunkt = ray.pointAtParameter(object.intersectionParameter(ray))
+    d = ray.direction 
     n = object.normalAt(schnittpunkt)
-    dr =  d - (2 * n.dot(d) * n) # d.h. für den reflektierten Vektor d eines auf eine Oberfläche mit der Normalen n eintreffenden Vektors d gilt - Abbildung 3.5
+    dr =  d - (2 * n.dot(d) * n)
     return strahl.Ray(schnittpunkt, dr)
      
 def shade( level , hitPointData, light, objectlist):
@@ -76,11 +68,11 @@ def shade( level , hitPointData, light, objectlist):
     if(hitPointData[0].shallReflect == 1):
         reflectedRay = computeReflectedRay(hitPointData[0], hitPointData[1])
         reflectColor = colorAt(level+1, reflectedRay, light, objectlist) 
-        return directColor + np.array([reflectColor[0]*0.4, reflectColor[1]*0.4, reflectColor[2]*0.4]) #     Hier einfach * 0.5 das die spiegelung nicht so extrem ist
+        return directColor + np.array([reflectColor[0]*0.4, reflectColor[1]*0.4, reflectColor[2]*0.4]) 
     return directColor
     
 def intersect(level, ray, objectlist, rekursionsGrenze=1):
-    if level == rekursionsGrenze: #erstmal auf rekursionstiefe gedoens achten, falls zu hoch kann man hier einfach none returnen damit colorAt schwarz liefert
+    if level == rekursionsGrenze:
         return None
     obj = iterateIntersect(ray, objectlist)
     if obj is None:
@@ -88,12 +80,9 @@ def intersect(level, ray, objectlist, rekursionsGrenze=1):
     return obj, ray
 
 def iterateIntersect(ray, objectlist):
-    obj = None  #Object auf none setzen damit es existiert
-    maxdist = float('inf') #Maxdist erstmal auf unendlich setzen, nach TUT
-    for object in objectlist:  #Alle objekte durchiterieren
-        #Schauen ob es intersections gibt, und wenn ja: die maxdist (eigentlich mindist ) auf die hitdist setzen, und das object mitgeben.
-        #Dies soll so lange gemacht werden bis das naheste object gefunden wird, und letztlich wird entweder die Hitpointdata zurückggegeben, was weiter zur shade führen soll
-        #oder es kommt None raus, was zur hintergrundfarbe führt.
+    obj = None 
+    maxdist = float('inf')
+    for object in objectlist:
         hitdist = object.intersectionParameter(ray)
         if hitdist and 0.0009 < hitdist < maxdist:
             maxdist = hitdist
@@ -151,7 +140,6 @@ def computePixels(wRes, hRes, camera, BACKGROUND_COLOR, objectlist, image, licht
         breite = wRes
     hoehe = hRes
 
-    #Tatsächlige Schleife
     for x in range(vonBreite, breite):
         for y in range(0, hoehe):
             ray = camera.calcRay(x,y)
@@ -175,10 +163,7 @@ if __name__ == "__main__":
         print("Example command for Squirrel: python .\RayTracer.py 20 20 -squirrel 4 ")
         print("MAX processCount = 8, MIN processCount = 1")
         sys.exit(-1)
-    #Materialen und Objekte:
-    #licht
     licht = licht.Light(np.array([1,3,2]), 1, np.array([200, 200, 200]))
-    #Nicht sicher ob hier noch was fehlt?? Laut Skript nur diff, amb und s, N
     redMaterial = material.Material(np.array([200,0,0]))
     greenMaterial = material.Material(np.array([0,200,0]))
     blueMaterial = material.Material(np.array([0,0,200]))
@@ -189,7 +174,7 @@ if __name__ == "__main__":
     objectlist = []
     squirrelList = []
     
-    #Objecte für raytracer test
+    #Objects for RayTracing test
     objectlist = [
         kugel.Sphere(np.array([0, 1, 10]), 1, redMaterial, 1), 
         kugel.Sphere(np.array([-1.2, -1, 10]), 1, greenMaterial, 1), 
@@ -200,24 +185,19 @@ if __name__ == "__main__":
     
     BACKGROUND_COLOR = (0,0,0)
 
-    # Kamera und Fenster
-    wRes, hRes = int(sys.argv[1]), int(sys.argv[2]) # breite, hoehe allgemein
+    wRes, hRes = int(sys.argv[1]), int(sys.argv[2])
 
-    a = np.deg2rad(45)/2 # fow
-    height = 2 * math.tan(a) # hoehe
-    aspectRatio = wRes / hRes # aspect ratio
-    width = aspectRatio * height # breite
-    pixelWidth = width / (wRes) # pixelwidth nach VL  
-    pixelHeight = height / (hRes) #pixelHeight nach VL
-    image = Image.new("RGB", (wRes, hRes)) #erstmal neues bild erzeugen welches mit RGB farbwerten arbeitet 
+    a = np.deg2rad(45)/2 
+    height = 2 * math.tan(a) 
+    aspectRatio = wRes / hRes 
+    width = aspectRatio * height 
+    pixelWidth = width / (wRes)
+    pixelHeight = height / (hRes) 
+    image = Image.new("RGB", (wRes, hRes)) 
 
-    #normale Kamera ist: cam.Camera(np.array([0, 0, 0 ]),np.array([0, 0, 50]),np.array([0,-1,0]), pixelWidth, pixelHeight, width, height)
-    #squirrel kamera : cam.Camera(np.array([2, 0, -6 ]),np.array([0, 2, 0]),np.array([0,-1,0]), pixelWidth, pixelHeight, width, height)
+    camera = None 
 
-    camera = None #Camera erzeugen und Ihr die werte geben
-    #loadSquirrel() # Eichhoernchen lad - methode
-
-    #datetime zum zeit festhalten
+    #Time-Tracking
     startZeit = datetime.datetime.now()    
     processes = []
     manager = multiprocessing.Manager()
@@ -238,13 +218,12 @@ if __name__ == "__main__":
             for i in range(prozessmenge):
                 processes[i].join()
 
-            #bild zusammenfügen
             for elements in return_dict.values():
                 for values in elements:
                     image.putpixel((values[0], values[1]), values[2])
 
             image.save("./images/raytracedShapesMultiProcessing"+ str(wRes) + "x"+ str(hRes) +".png", 'PNG')
-            image.show("raytracedshapes"+ str(wRes) + "x"+ str(hRes) +".png", 'PNG')
+            image.show("raytracedShapes"+ str(wRes) + "x"+ str(hRes) +".png")
         else:
             print("MAXIMALE PROZESSMENGE = 8, MINIMALE PROZESSMENGE = 1")
     elif sys.argv[3] == '-squirrel':
@@ -266,7 +245,7 @@ if __name__ == "__main__":
                     image.putpixel((values[0], values[1]), values[2])
             print(f"hat {datetime.datetime.now() - startZeit} gedauert")
             image.save("./images/squirrel"+ str(wRes) + "x"+ str(hRes) +".png", 'PNG')
-            image.show("squirrel"+ str(wRes) + "x"+ str(hRes) +".png", 'PNG')
+            image.show("squirrel"+ str(wRes) + "x"+ str(hRes) +".png")
         else:
             print("MAXIMALE PROZESSMENGE = 8, MINIMALE PROZESSMENGE = 1")
     print(f"hat {datetime.datetime.now() - startZeit} gedauert. ")
